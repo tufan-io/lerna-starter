@@ -1,0 +1,13 @@
+{
+  "lerna": "2.4.0",
+  "version": "0.0.2",
+  "useGitVersion": true,
+	"reject-cycles": true,
+	"use-workspaces": true,
+	"hoist": true,
+	"loglevel": "info",
+	"concurrency": 4,
+	"packages": [
+		"sub-modules/*"
+	]
+}

@@ -1,0 +1,48 @@
+{
+  "name": "lerna-starter",
+  "private": true,
+  "version": "0.0.0",
+  "description": "A lerna starter module.",
+  "scripts": {
+    "list": "lerna-list",
+    "prepublishOnly": "lerna publish --exact",
+    "precommit": "git-mods --staged_ok",
+    "prepush": "git-mods",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "files": [
+    ".editorconfig",
+    ".gitignore",
+    "lerna.json",
+    "package.json",
+    "package-lock.json",
+    "README.md",
+    "LICENSE.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sramam/lerna-starter.git"
+  },
+  "keywords": [],
+  "author": "Shishir Ramam",
+  "license": "SEE LICENSE IN LICENSE.md",
+  "bugs": {
+    "url": "https://github.com/sramam/lerna-starter/issues"
+  },
+  "homepage": "https://github.com/sramam/lerna-starter#readme",
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "devDependencies": {
+    "cz-conventional-changelog": "^2.1.0",
+    "git-mods": "^1.0.7",
+    "husky": "^0.14.3",
+    "lerna": "^2.4.0",
+    "lerna-list": "^1.0.3"
+  },
+  "workspaces": [
+    "sub-modules/*"
+  ]
+}
