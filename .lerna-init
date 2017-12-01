@@ -139,51 +139,52 @@ if (require.main !== module) {
   const p = new Promise((resolve, reject) => {
     console.log('---');
     const askGitHost = () => {
-      rl.question(`git host(gh, bb or gl): `, (answer) => {
-        if (answer) {
-          const git = {
-            gh: 'github',
-            bb: 'bitbucket',
-            gl: 'gitlab',
-            gitlab: 'gitlab',
-            github: 'github',
-            bitbucket: 'bitbucket'
+      rl.question(
+        `git host(gh, bb or gl): `,
+        answer => {
+          if (answer) {
+            const git = {
+              gh: 'github',
+              bb: 'bitbucket',
+              gl: 'gitlab',
+              gitlab: 'gitlab',
+              github: 'github',
+              bitbucket: 'bitbucket'
+            }
+            config.githost = git[answer];
+            if (config.githost) {
+              return resolve(config);
+            } else {
+              console.log('must be one of "gh", "bb", "gl"');
+            }
           }
-          config.githost = git[answer];
-          if (config.githost) {
-            return resolve(config);
-          } else {
-            console.log('must be one of "gh", "bb", "gl"');
-          }
-        }
-        askGitHost(); // loop
-      });
+          askGitHost(); // loop
+        });
     };
     askGitHost();
   }).then(config => {
     return new Promise((resolve, reject) => {
       const askGitOrg = () => {
-        rl.question(`
-git user / org name: `, (answer) => {
-          if (answer) {
-            config.org = answer;
-            return resolve(config);
-          }
-          askGitOrg(); // loop
-        });
+        rl.question(`git user / org name: `,
+          answer => {
+            if (answer) {
+              config.org = answer;
+              return resolve(config);
+            }
+            askGitOrg(); // loop
+          });
       };
       askGitOrg();
     });
   }).then(config => {
     return new Promise((resolve, reject) => {
       const appName = () => {
-        rl.question(`
-Name of the lerna - repo($ {
-  app
-}): `, (answer) => {
-          config.app = answer || app;
-          return resolve(config);
-        });
+        rl.question(
+          `Name of the lerna-repo(${app}): `,
+          answer => {
+            config.app = answer || app;
+            return resolve(config);
+          });
       }
       appName();
     });
@@ -191,9 +192,7 @@ Name of the lerna - repo($ {
     return new Promise((resolve, reject) => {
       const askConductEmail = () => {
         rl.question(
-          `
-Email address
-for code - of -conduct violations: `,
+          `Email address for code-of-conduct violations: `,
           conduct => {
             if (conduct) {
               config.conduct = conduct;
@@ -209,14 +208,10 @@ for code - of -conduct violations: `,
   }).then(
     configLernaRoot
   ).then(config => {
-    console.log(`
-`);
-    console.log(`
-TODO: configure git username and email before committing `);
-    console.log(`
-`);
-    console.log(`
-git config user.name\ "John Doe\"`);
+    console.log(``);
+    console.log(`TODO: configure git username and email before committing `);
+    console.log(``);
+    console.log(`    git config user.name\ "John Doe\"`);
     console.log(`    git config user.email john@doe.com`);
     console.log(``);
     console.log(`---`);

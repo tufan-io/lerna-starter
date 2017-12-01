@@ -153,29 +153,34 @@ if (require.main !== module) {
 
     console.log('---');
     const askSubModuleName = () => {
-      rl.question(`What would you like to name the sub-module? `, answer => {
-        if (answer) {
-          config.subModule = answer;
-          resolve(config);
-        } else {
-          // loop till we have an answer
-          askSubModuleName();
-        }
-      });
+      rl.question(
+        `What would you like to name the sub-module? `,
+        answer => {
+          if (answer) {
+            config.subModule = answer;
+            resolve(config);
+          } else {
+            // loop till we have an answer
+            askSubModuleName();
+          }
+        });
     };
     askSubModuleName();
 
   }).then(config => new Promise((resolve, reject) => {
 
-    rl.question(`npm-namespace if needed (optional): `, answer => {
-      config.npmNamespace = answer || undefined;
-      resolve(config);
-    })
+    rl.question(
+      `npm-namespace if needed (optional): `,
+      answer => {
+        config.npmNamespace = answer || undefined;
+        resolve(config);
+      })
 
   })).then(config => new Promise((resolve, reject) => {
 
     rl.question(
-      `Is this a private sub-module? (y/N) `, private => {
+      `Is this a private sub-module? (y/N) `,
+      private => {
         const isPrivate = private.match(/\s*(y|Y)\s*/);
         config.private = isPrivate ? true : false;
         return resolve(config);
@@ -184,7 +189,8 @@ if (require.main !== module) {
   })).then(config => new Promise((resolve, reject) => {
 
     rl.question(
-      `Email address for code-of-conduct violations: `, conduct => {
+      `Email address for code-of-conduct violations: `,
+      conduct => {
         config.conduct = conduct || undefined;
         rl.close();
         return resolve(config);
