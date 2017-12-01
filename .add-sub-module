@@ -1,0 +1,208 @@
+#!/usr/bin/env node
+
+const fs = require('fs');
+const path = require('path');
+const readline = require('readline');
+const cp = require('child_process');
+
+const JSON2 = j => JSON.stringify(j, null, 2);
+
+const resetPackageJson = (ctx, pkg) => {
+  delete pkg.scripts.postinstall;
+  pkg.name = ctx.npmNamespace ? `@${ctx.npmNamespace}/${ctx.subModule}` : ctx.subModule;
+  pkg.description = '';
+  pkg.version = '1.0.0';
+  pkg.keywords = [];
+  pkg.scripts['git-publish'] = 'gitpkg publish';
+  pkg.repository = `${ctx.giturl}#${ctx.subModule}-latest`;
+  // remove scripts from distributed files
+  pkg.files = [
+    'dist',
+    'docs'
+  ];
+  return pkg;
+}
+
+
+// Since this is a meta-script, it's not fair
+// to install dev-dependencies. We have simpler
+// local implementations of necessary npm modules,
+// allowing us to do the needful.
+// Post a first run, this file will be deleted from
+// the cloned repo.
+
+function sed(fname, match_re, replacement) {
+  const content = fs.readFileSync(fname, 'utf8');
+  fs.writeFileSync(fname, content.replace(match_re, replacement), 'utf8');
+}
+
+function rimraf(dir) {
+  // console.log(`deleting ${dir}`);
+  if (dir === '/') return;
+  if (fs.existsSync(dir)) {
+    fs.readdirSync(dir).forEach(function (file, index) {
+      var curdir = path.join(dir, file);
+      if (fs.lstatSync(curdir).isDirectory()) { // recurse
+        rimraf(curdir);
+      } else { // delete file
+        fs.unlinkSync(curdir);
+      }
+    });
+    fs.rmdirSync(dir);
+  }
+};
+
+function spawnSync(cmdline, opts) {
+  opts = opts || {
+    cwd: process.cwd(),
+    stdio: 'inherit'
+  };
+  const [cmd, ...args] = cmdline.split(' ');
+  const result = cp.spawnSync(cmd, args, opts);
+  if (result.status) {
+    throw new Error(result);
+  } else {
+    return result;
+  }
+}
+
+/**
+ *
+ * Shape of config:
+ *    {
+ *      subModule: 'name of sub-module',
+ *      npmNamespace: 'npm namespace - optional',
+ *      giturl: 'URL of the parent lerna repo with gitpkg tag attached.',
+ *      conduct: 'email for reporting code-of-conduct violations.'
+ *    }
+ *
+ * @param {any} config
+ * @returns
+ */
+function configLernaSubModule(config) {
+  const subModuleDir = path.resolve(process.cwd(), `sub-modules/${config.subModule}`);
+  const re = {
+    app: /typescript-starter-node/g,
+    org: /sramam/g,
+    conduct: `[REPLACE EMAIL]`,
+  };
+
+  // get and adapt git-url from rootRepo
+  const rootPkg = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
+  const gitRootUrl = rootPkg.repository.url || rootPkg.repository || undefined;
+  if (!gitRootUrl) {
+    throw new Error(`Seems we are missing a git url in the rootPkg. Please set & retry`);
+  }
+
+  config.giturl = `${gitRootUrl}#${config.subModule}-latest`;
+  // extract org from the git-url
+  config.npmNamespace = config.giturl.match(/.*\/([^\/]+)\/|.*:([^\/]+)\//);
+
+  // clone template repo into directory
+  spawnSync(`git clone https://github.com/sramam/typescript-starter-node ${subModuleDir}`);
+
+  // adjust sub-module's package.json
+  let pkg = JSON.parse(fs.readFileSync(`${subModuleDir}/package.json`, 'utf8'));
+  pkg = resetPackageJson(config, pkg);
+  fs.writeFileSync(`${subModuleDir}/package.json`, JSON2(pkg), 'utf8');
+
+  // reset sub-module's CHANGELOG.md
+  fs.writeFileSync(`${subModuleDir}/CHANGELOG.md`, '', 'utf8'); // reset changelog.md
+
+  // adjust sub-module's README.md
+  sed(`${subModuleDir}/README.md`, re.app, config.subModule);
+  sed(`${subModuleDir}/README.md`, re.org, config.npmNamespace);
+
+  // adjust sub-module's code-of-conduct.md (for contact email)
+  if (config.conduct) {
+    sed(`${subModuleDir}/code-of-conduct.md`, re.conduct, config.conduct);
+    console.log('--');
+    console.log(`code-of-conduct contact email set to ${config.conduct}`);
+  } else {
+    console.log(`Please update the contact email in code-of-conduct.md`);
+  }
+
+  // delete unnecessary artifacts in sub-module
+  // git repo
+  rimraf(`${subModuleDir}/.git`);
+  // scripts dir
+  rimraf(`${subModuleDir}/scripts`);
+  // .reinit script
+  fs.unlinkSync(`${subModuleDir}/.reinit`);
+
+  spawnSync(`npx lerna bootstrap`);
+  spawnSync(`git add . --all`);
+
+  return config;
+}
+
+if (require.main !== module) {
+
+  exports.configLernaSubModule = configLernaSubModule
+
+} else {
+  // this is the purpose
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+
+  let config = {};
+
+  const p = new Promise((resolve, reject) => {
+
+    console.log('---');
+    const askSubModuleName = () => {
+      rl.question(`What would you like to name the sub-module? `, answer => {
+        if (answer) {
+          config.subModule = answer;
+          resolve(config);
+        } else {
+          // loop till we have an answer
+          askSubModuleName();
+        }
+      });
+    };
+    askSubModuleName();
+
+  }).then(config => new Promise((resolve, reject) => {
+
+    rl.question(`npm-namespace if needed (optional): `, answer => {
+      config.npmNamespace = answer || undefined;
+      resolve(config);
+    })
+
+  })).then(config => new Promise((resolve, reject) => {
+
+    rl.question(
+      `Is this a private sub-module? (y/N) `, private => {
+        const isPrivate = private.match(/\s*(y|Y)\s*/);
+        config.private = isPrivate ? true : false;
+        return resolve(config);
+      });
+
+  })).then(config => new Promise((resolve, reject) => {
+
+    rl.question(
+      `Email address for code-of-conduct violations: `, conduct => {
+        config.conduct = conduct || undefined;
+        rl.close();
+        return resolve(config);
+      });
+
+  })).then(
+
+    configLernaSubModule
+
+  ).then(config => {
+
+    console.log(`---`);
+    console.log(`created sub-module ${config.giturl}`);
+    console.log(`---`);
+
+  }).catch(
+
+    err => console.error(err)
+
+  );
+}

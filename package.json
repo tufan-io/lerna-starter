@@ -4,10 +4,12 @@
   "version": "0.0.0",
   "description": "A lerna starter module.",
   "scripts": {
+    "postinstall": "node ./.lerna-init",
     "list": "lerna-list",
     "prepublishOnly": "lerna publish --exact",
     "precommit": "git-mods --staged_ok",
     "prepush": "git-mods",
+    "add-sub-module": "node .add-sub-module",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "files": [
