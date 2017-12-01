@@ -96,7 +96,10 @@ function configLernaSubModule(config) {
 
   config.giturl = `${gitRootUrl}#${config.subModule}-latest`;
   // extract org from the git-url
-  config.npmNamespace = config.giturl.match(/.*\/([^\/]+)\/|.*:([^\/]+)\//);
+  config.npmNamespace = (
+    config.giturl.match(/.*\/([^\/]+)\//) ||
+    config.giturl.match(/.*:([^\/]+)\//)
+  )[1];
 
   // clone template repo into directory
   spawnSync(`git clone -b ava --single-branch https://github.com/sramam/typescript-starter-node ${subModuleDir}`);
