@@ -108,10 +108,9 @@ function configLernaRoot(config) {
   rimraf(path.join(process.cwd(), 'scripts'));
 
   // initialize new git repo - skip for lerna repo
-  return spawnSync(`git init`);
+  spawnSync(`git init`);
   fs.unlinkSync('.lerna-init');
   spawnSync(`npm install`);
-  spawnSync(`npm run build:dist`);
   spawnSync(`git add . --all`);
   const giturl = `https://${config.githost}.com/${config.org}/${config.app}.git`;
   spawnSync(`git remote add origin ${giturl}`);

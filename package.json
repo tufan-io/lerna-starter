@@ -7,7 +7,6 @@
     "bootstrap": "lerna bootstrap",
     "publish": "lerna publish",
     "git-publish": "lerna run git-publish",
-    "postinstall": "node ./.lerna-init",
     "list": "lerna-list",
     "prepublishOnly": "lerna publish --exact",
     "precommit": "git-mods --staged_ok",
