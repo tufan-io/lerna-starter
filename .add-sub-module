@@ -99,7 +99,7 @@ function configLernaSubModule(config) {
   config.npmNamespace = config.giturl.match(/.*\/([^\/]+)\/|.*:([^\/]+)\//);
 
   // clone template repo into directory
-  spawnSync(`git clone https://github.com/sramam/typescript-starter-node ${subModuleDir}`);
+  spawnSync(`git clone -b ava --single-branch https://github.com/sramam/typescript-starter-node ${subModuleDir}`);
 
   // adjust sub-module's package.json
   let pkg = JSON.parse(fs.readFileSync(`${subModuleDir}/package.json`, 'utf8'));
