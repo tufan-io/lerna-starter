@@ -4,6 +4,9 @@
   "version": "0.0.0",
   "description": "A lerna starter module.",
   "scripts": {
+    "bootstrap": "lerna bootstrap",
+    "publish": "lerna publish",
+    "git-publish": "lerna run git-publish",
     "postinstall": "node ./.lerna-init",
     "list": "lerna-list",
     "prepublishOnly": "lerna publish --exact",
@@ -13,25 +16,32 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "files": [
+    ".add-sub-module",
     ".editorconfig",
     ".gitignore",
-    "lerna.json",
-    "package.json",
-    "package-lock.json",
+    ".lerna-init",
+    ".vscode",
+    "APACHE-2.0.md",
+    "LICENSE.md",
     "README.md",
-    "LICENSE.md"
+    "code-of-conduct.md",
+    "docs",
+    "lerna.json",
+    "package-lock.json",
+    "package.json",
+    "sub-modules"
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sramam/lerna-starter.git"
+    "url": "git+https://github.com/tufan-io/lerna-starter.git"
   },
   "keywords": [],
   "author": "Shishir Ramam",
   "license": "SEE LICENSE IN LICENSE.md",
   "bugs": {
-    "url": "https://github.com/sramam/lerna-starter/issues"
+    "url": "https://github.com/tufan-io/lerna-starter/issues"
   },
-  "homepage": "https://github.com/sramam/lerna-starter#readme",
+  "homepage": "https://github.com/tufan-io/lerna-starter#readme",
   "config": {
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
