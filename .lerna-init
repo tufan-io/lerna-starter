@@ -96,7 +96,6 @@ function configLernaRoot(config) {
   sed('./README.md', re.org, config.org);
   console.log(`project renamed to ${url}`);
   if (config.conduct) {
-    rl.close();
     sed('./code-of-conduct.md', re.conduct, config.conduct);
     console.log('--');
     console.log(`code-of-conduct contact email set to ${config.conduct}`);
