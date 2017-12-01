@@ -25,7 +25,7 @@ npm install
 npm add-sub-module
 
 # 5. commiteszen is configured on the lerna mono-repo, so to commit changes
-git cz
+git add . && git cz
 
 # From this point on, it's really a lerna mono-repo.
 # equivalent npm commands are provided for your's truly, and anyone who has

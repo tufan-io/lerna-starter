@@ -87,6 +87,17 @@ function configLernaRoot(config) {
     org: /sramam/g,
     conduct: `[REPLACE EMAIL]`
   };
+
+  // delete old git repo and initialize a new one.
+  rimraf(path.join(process.cwd(), '.git'));
+  rimraf(path.join(process.cwd(), 'scripts'));
+
+  // initialize new git repo - skip for lerna repo
+  spawnSync(`git init`);
+  spawnSync(`git add . --all`);
+  // by staging all cloned files, we can use `git diff` to help track all config changes
+  // made to the repo.
+
   resetPackageJson(config);
   // reset changelog.md
   fs.writeFileSync('CHANGELOG.md', '', 'utf8');
@@ -103,15 +114,8 @@ function configLernaRoot(config) {
     console.log(`Please update the contact email in code-of-conduct.md`);
   }
 
-  // delete old git repo and initialize a new one.
-  rimraf(path.join(process.cwd(), '.git'));
-  rimraf(path.join(process.cwd(), 'scripts'));
-
-  // initialize new git repo - skip for lerna repo
-  spawnSync(`git init`);
   fs.unlinkSync('.lerna-init');
   spawnSync(`npm install`);
-  spawnSync(`git add . --all`);
   const giturl = `https://${config.githost}.com/${config.org}/${config.app}.git`;
   spawnSync(`git remote add origin ${giturl}`);
 

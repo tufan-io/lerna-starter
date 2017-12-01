@@ -14,7 +14,7 @@ const resetPackageJson = (ctx, pkg) => {
   pkg.version = '1.0.0';
   pkg.keywords = [];
   pkg.scripts['git-publish'] = 'gitpkg publish';
-  pkg.repository = `${ctx.giturl}#${ctx.subModule}-latest`;
+  pkg.repository = ctx.giturl;
   // remove scripts from distributed files
   pkg.files = [
     'dist',
@@ -103,6 +103,15 @@ function configLernaSubModule(config) {
 
   // clone template repo into directory
   spawnSync(`git clone -b ava --single-branch https://github.com/sramam/typescript-starter-node ${subModuleDir}`);
+  // remove some un-necessary artifacts in typescript-starter-node
+  rimraf(`${subModuleDir}/scripts`); // scripts dir
+  fs.unlinkSync(`${subModuleDir}/.reinit`); // .reinit script
+  rimraf(`${subModuleDir}/.git`); // we don't need a git repo / module
+  spawnSync(`git add . --all`); // we'll use the root git-repo
+  // by staging the cloned files, we can track all configuration changes
+  // with a simple git-diff. The tool does not commit any changes.
+
+  // all config changes are now available as diffs.
 
   // adjust sub-module's package.json
   let pkg = JSON.parse(fs.readFileSync(`${subModuleDir}/package.json`, 'utf8'));
@@ -125,16 +134,8 @@ function configLernaSubModule(config) {
     console.log(`Please update the contact email in code-of-conduct.md`);
   }
 
-  // delete unnecessary artifacts in sub-module
-  // git repo
-  rimraf(`${subModuleDir}/.git`);
-  // scripts dir
-  rimraf(`${subModuleDir}/scripts`);
-  // .reinit script
-  fs.unlinkSync(`${subModuleDir}/.reinit`);
-
   spawnSync(`npx lerna bootstrap`);
-  spawnSync(`git add . --all`);
+
 
   return config;
 }
