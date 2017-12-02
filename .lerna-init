@@ -114,10 +114,11 @@ function configLernaRoot(config) {
     console.log(`Please update the contact email in code-of-conduct.md`);
   }
 
-  fs.unlinkSync('.lerna-init');
   spawnSync(`npm install`);
   const giturl = `https://${config.githost}.com/${config.org}/${config.app}.git`;
   spawnSync(`git remote add origin ${giturl}`);
+
+  fs.unlinkSync('.lerna-init');
 
   return config;
 }
