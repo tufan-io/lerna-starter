@@ -13,13 +13,13 @@ Our opinions on how to [setup a lerna mono-repo](./docs/lerna-setup.md).
 
 ```bash
 # 1. Clone the repo into the root of ypur desired mono-repo
-git clone https://github.com/tufan-io/lerna-setup .
+git clone https://github.com/tufan-io/lerna-starter .
 
-# 2. reconfigure the mono-repo. Asks a few questions to reconfigure
-node ./.lerna-init
-
-# 3. Install root module dependencies
+# 2. Install root module dependencies
 npm install
+
+# 3. reconfigure the mono-repo. Asks a few questions to reconfigure
+node ./.lerna-init
 
 # 4. Add sub-module: interactive prompts automate starter repo reinitialization.
 npm add-sub-module

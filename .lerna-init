@@ -83,8 +83,8 @@ function spawnSync(cmdline, opts) {
  */
 function configLernaRoot(config) {
   const re = {
-    app: /typescript-starter-node/g,
-    org: /sramam/g,
+    app: /lerna-starter/g,
+    org: /tufan-io/g,
     conduct: `[REPLACE EMAIL]`
   };
 
