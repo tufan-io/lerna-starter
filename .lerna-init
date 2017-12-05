@@ -40,21 +40,32 @@ function sed(fname, match_re, replacement) {
   fs.writeFileSync(fname, content.replace(match_re, replacement), 'utf8');
 }
 
-function rimraf(dir) {
-  // console.log(`deleting ${dir}`);
-  if (dir === '/') return;
-  if (fs.existsSync(dir)) {
-    fs.readdirSync(dir).forEach(function (file, index) {
-      var curdir = path.join(dir, file);
-      if (fs.lstatSync(curdir).isDirectory()) { // recurse
-        rimraf(curdir);
-      } else { // delete file
-        fs.unlinkSync(curdir);
-      }
-    });
-    fs.rmdirSync(dir);
-  }
+function rimraf(fpath) {
+  if (fpath === '/') return; // do not delete root! :)
+  try {
+    const stat = fs.statSync(fpath);
+    if (stat.isDirectory()) {
+      fs.readdirSync(fpath).forEach(function (file, index) {
+        var curdir = fpath.join(fpath, file);
+        if (fs.lstatSync(curdir).isDirectory()) { // recurse
+          rimraf(curdir);
+        } else { // delete file
+          fs.unlinkSync(curdir);
+        }
+      });
+      fs.rmdirSync(fpath);
+    } else {
+      fs.unlinkSync(fpath);
+    }
+  } catch (err) {} // noop;
 };
+
+function mv(file1, file2) {
+  try {
+    fs.unlinkSync(file2);
+  } catch (err) {}
+  fs.renameSync(file1, file2);
+}
 
 function spawnSync(cmdline, opts) {
   opts = opts || {
@@ -88,7 +99,7 @@ function configLernaRoot(config) {
     conduct: `[REPLACE EMAIL]`
   };
 
-  // delete old git repo and initialize a new one.
+  // delete old git repo and other auxillary files.
   rimraf(path.join(process.cwd(), '.git'));
   rimraf(path.join(process.cwd(), 'scripts'));
 
@@ -118,7 +129,7 @@ function configLernaRoot(config) {
   const giturl = `https://${config.githost}.com/${config.org}/${config.app}.git`;
   spawnSync(`git remote add origin ${giturl}`);
 
-  fs.unlinkSync('.lerna-init');
+  rimraf('.lerna-init');
 
   return config;
 }

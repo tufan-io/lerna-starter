@@ -10,10 +10,9 @@ const JSON2 = j => JSON.stringify(j, null, 2);
 const resetPackageJson = (ctx, pkg) => {
   delete pkg.scripts.postinstall;
   pkg.name = ctx.npmNamespace ? `@${ctx.npmNamespace}/${ctx.subModule}` : ctx.subModule;
-  pkg.description = '';
+  pkg.description = ctx.description || '';
   pkg.version = '1.0.0';
   pkg.keywords = [];
-  pkg.scripts['git-publish'] = 'gitpkg publish';
   pkg.devDependencies['gitpkg'] = 'https://github.com/sramam/gitpkg';
   pkg.repository = ctx.giturl;
   // remove scripts from distributed files
@@ -21,9 +20,19 @@ const resetPackageJson = (ctx, pkg) => {
     'dist',
     'docs'
   ];
+  pkg.scripts['git-publish'] = 'gitpkg publish';
+  delete pkg.scripts['staged-mods-ok'];
+  delete pkg.scripts['no-mods'];
+  delete pkg.scripts['coveralls-report'];
+  delete pkg.scripts['precommit'];
+  delete pkg.scripts['prepush'];
+  delete pkg.scripts['semantic-release'];
+  delete pkg.scripts['postinstall'];
+  delete pkg['run-batch']['precommit'];
+  delete pkg['run-batch']['prepush'];
+
   return pkg;
 }
-
 
 // Since this is a meta-script, it's not fair
 // to install dev-dependencies. We have simpler
@@ -118,7 +127,7 @@ function configLernaSubModule(config) {
   // remove some un-necessary artifacts in typescript-starter-node
   rimraf(`${subModuleDir}/scripts`); // scripts dir
   rimraf(`${subModuleDir}/.reinit`); // .reinit script
-  mv('_travis.yml', '.travis.yml');
+  mv(`${subModuleDir}/_travis.yml`, `${subModuleDir}/travis.yml`);
   rimraf(`${subModuleDir}/.git`); // we don't need a git repo / module
   spawnSync(`git add . --all`); // we'll use the root git-repo
   // by staging the cloned files, we can track all configuration changes
@@ -191,6 +200,15 @@ if (require.main !== module) {
         config.npmNamespace = answer || undefined;
         resolve(config);
       })
+
+  })).then(config => new Promise((resolve, reject) => {
+
+      rl.question(
+        `description of sub-module (keep it short): `,
+        answer => {
+          config.description = answer || undefined;
+          resolve(config);
+        })
 
   })).then(config => new Promise((resolve, reject) => {
 
