@@ -74,10 +74,6 @@ function mv(file1, file2) {
 }
 
 function spawnSync(cmdline, opts) {
-  opts = opts || {
-    cwd: process.cwd(),
-    stdio: 'inherit'
-  };
   const [cmd, ...args] = cmdline.split(' ');
   const result = cp.spawnSync(cmd, args, opts);
   if (result.status) {
@@ -91,8 +87,9 @@ function spawnSync(cmdline, opts) {
  *
  * Shape of config:
  *    {
+ *      cwd: 'directory of the root lerna component',
  *      subModule: 'name of sub-module',
- *      npmNamespace: 'npm namespace - optional',
+ *      npmNamespace: 'npm namespace - typically, picked from root component',
  *      giturl: 'URL of the parent lerna repo with gitpkg tag attached.',
  *      conduct: 'email for reporting code-of-conduct violations.'
  *    }
@@ -101,7 +98,7 @@ function spawnSync(cmdline, opts) {
  * @returns
  */
 function configLernaSubModule(config) {
-  const subModuleDir = path.resolve(process.cwd(), `sub-modules/${config.subModule}`);
+  const subModuleDir = path.resolve(config.cwd, `sub-modules/${config.subModule}`);
   const re = {
     app: /typescript-starter-node/g,
     org: /sramam/g,
@@ -122,14 +119,23 @@ function configLernaSubModule(config) {
     config.giturl.match(/.*:([^\/]+)\//)
   )[1];
 
+  const spawnOpts = {
+    cwd: config.cwd,
+    stdio: 'inherit'
+  };
+
   // clone template repo into directory
-  spawnSync(`git clone -b ava --single-branch https://github.com/sramam/typescript-starter-node ${subModuleDir}`);
+  spawnSync(
+    `git clone -b ava --single-branch https://github.com/sramam/typescript-starter-node ${subModuleDir}`,
+    spawnOpts);
   // remove some un-necessary artifacts in typescript-starter-node
   rimraf(`${subModuleDir}/scripts`); // scripts dir
   rimraf(`${subModuleDir}/.reinit`); // .reinit script
   mv(`${subModuleDir}/_travis.yml`, `${subModuleDir}/travis.yml`);
   rimraf(`${subModuleDir}/.git`); // we don't need a git repo / module
-  spawnSync(`git add . --all`); // we'll use the root git-repo
+  spawnSync(
+    `git add . --all`, // we'll add to the root git-repo
+    spawnOpts);
   // by staging the cloned files, we can track all configuration changes
   // with a simple git-diff. The tool does not commit any changes.
 
@@ -156,14 +162,16 @@ function configLernaSubModule(config) {
     console.log(`Please update the contact email in code-of-conduct.md`);
   }
 
-  spawnSync(`npx lerna bootstrap`);
+  spawnSync(`npx lerna bootstrap`, spawnOpts);
+  spawnSync(`npx lerna run --scope ${pkg.name} build:dist`, spawnOpts);
 
   return config;
 }
 
 if (require.main !== module) {
 
-  exports.configLernaSubModule = configLernaSubModule
+  exports.configLernaSubModule = configLernaSubModule;
+  exports.resetPackageJson = resetPackageJson;
 
 } else {
   // this is the purpose
@@ -172,14 +180,29 @@ if (require.main !== module) {
     output: process.stdout
   });
 
-  let config = {};
+  if (process.cwd() !== __dirname) {
+    throw new Error(`Can only add sub-component from a lerna repository`);
+  }
+  // read package.json & pick namespace from it.
+  const rootPkg = JSON.parse(fs.readFileSync(`${process.cwd()}/package.json`, 'utf8'));
+  const rootNs = ((name) => {
+    const parts = name.split('/');
+    return parts.length === 2 ? parts[0] : '';
+  })(rootPkg.name);
+
+  let config = {
+    cwd: process.cwd(),
+    npmNamespace: rootNs
+  };
 
   const p = new Promise((resolve, reject) => {
 
     console.log('---');
     const askSubModuleName = () => {
+
+      // namespace is picked from parent by default. Can be adjusted manually post generation.
       rl.question(
-        `What would you like to name the sub-module? `,
+        `Name of sub-module: ${rootNs}/`,
         answer => {
           if (answer) {
             config.subModule = answer;
@@ -194,19 +217,10 @@ if (require.main !== module) {
 
   }).then(config => new Promise((resolve, reject) => {
 
-    rl.question(
-      `npm-namespace if needed (optional): `,
-      answer => {
-        config.npmNamespace = answer || undefined;
-        resolve(config);
-      })
-
-  })).then(config => new Promise((resolve, reject) => {
-
       rl.question(
         `description of sub-module (keep it short): `,
         answer => {
-          config.description = answer || undefined;
+          config.description = answer || '';
           resolve(config);
         })
 
@@ -217,16 +231,7 @@ if (require.main !== module) {
       private => {
         const isPrivate = private.match(/\s*(y|Y)\s*/);
         config.private = isPrivate ? true : false;
-        return resolve(config);
-      });
-
-  })).then(config => new Promise((resolve, reject) => {
-
-    rl.question(
-      `Email address for code-of-conduct violations: `,
-      conduct => {
-        config.conduct = conduct || undefined;
-        rl.close();
+        console.log('---');
         return resolve(config);
       });
 
@@ -239,10 +244,12 @@ if (require.main !== module) {
     console.log(`---`);
     console.log(`created sub-module ${config.giturl}`);
     console.log(`---`);
+    process.exitCode = 0;
 
-  }).catch(
+  }).catch(err => {
 
-    err => console.error(err)
+    console.error(err);
+    process.exitCode = -1;
 
-  );
+  }).then(() => process.exit(process.exitCode))
 }
