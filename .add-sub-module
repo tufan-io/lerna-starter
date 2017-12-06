@@ -13,7 +13,7 @@ const resetPackageJson = (ctx, pkg) => {
   pkg.description = ctx.description || '';
   pkg.version = '1.0.0';
   pkg.keywords = [];
-  pkg.devDependencies['gitpkg'] = 'https://github.com/sramam/gitpkg';
+  pkg.devDependencies['gitpkg'] = 'https://github.com/sramam/gitpkg#forked-release"';
   pkg.repository = ctx.giturl;
   // remove scripts from distributed files
   pkg.files = [
@@ -152,6 +152,9 @@ function configLernaSubModule(config) {
   // adjust sub-module's README.md
   sed(`${subModuleDir}/README.md`, re.app, config.subModule);
   sed(`${subModuleDir}/README.md`, re.org, config.npmNamespace);
+
+  // copy a code-of-conduct from root repo to - required node v8.5+
+  fs.copyFileSync(`${config.cwd}/code-of-conduct.md`, `${subModuleDir}/code-of-conduct.md`);
 
   // adjust sub-module's code-of-conduct.md (for contact email)
   if (config.conduct) {
